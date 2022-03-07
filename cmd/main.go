@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// TODOs:
+// TODOs(bwagner5):
 //   1. Option to clean-up experiments
 //   2. Option to adjust time of rebalance recommendation
 //   3. Option to pass an OD instance and have this tool create a matching instance that is spot to test an interruption
