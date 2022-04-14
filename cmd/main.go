@@ -41,8 +41,8 @@ type Options struct {
 func main() {
 	options := Options{}
 	rootCmd := &cobra.Command{
-		Use:   "itn",
-		Short: "itn is a simple CLI tool that triggers Amazon EC2 Spot Interruption Termination Notifications (ITNs) and Rebalance Recommendations.",
+		Use:   "ec2-spot-interrupter",
+		Short: "ec2-spot-interrupter is a simple CLI tool that triggers Amazon EC2 Spot Interruption Termination Notifications (ITNs) and Rebalance Recommendations.",
 		Run: func(cmd *cobra.Command, _ []string) {
 			if options.version {
 				fmt.Println(version)

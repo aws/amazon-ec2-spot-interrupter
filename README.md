@@ -27,13 +27,15 @@ If you are looking for a tool to test Spot ITNs and Rebalance Recommendations lo
 
 ```
 $ ec2-spot-interrupter --help
-The ec2-spot-interrupter is a simple CLI tool that triggers Amazon EC2 Spot Interruption Termination Notifications (ITNs) and Rebalance Recommendations.
+ec2-spot-interrupter is a simple CLI tool that triggers Amazon EC2 Spot Interruption Termination Notifications (ITNs) and Rebalance Recommendations.
 
 Usage:
   ec2-spot-interrupter [flags]
 
 Flags:
-  -h, --help                   help for itn
+  -c, --clean                  clean up the underlying simulations (default true)
+  -d, --delay duration         duration until the interruption notification is sent (default 15s)
+  -h, --help                   help for ec2-spot-interrupter
   -i, --instance-ids strings   instance IDs to interrupt
   -v, --version                the version
 ```
