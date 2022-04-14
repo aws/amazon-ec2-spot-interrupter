@@ -17,6 +17,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -26,6 +27,7 @@ import (
 	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/aws/smithy-go/ptr"
+	"go.uber.org/multierr"
 )
 
 const (
@@ -56,6 +58,7 @@ const (
 			}
 		]
 	}`
+	spotITNAction = "aws:ec2:send-spot-instance-interruptions"
 )
 
 type ITN struct {
@@ -74,15 +77,42 @@ func New(cfg aws.Config) *ITN {
 	}
 }
 
-func (i ITN) Interrupt(ctx context.Context, instanceIDs []string) error {
-	experiment, err := i.createInterruptions(ctx, instanceIDs)
+// Interrupt will start an FIS experiment to send Spot ITNs to the instance IDs specified and then monitor
+// the experiment for the progress.
+func (i ITN) Interrupt(ctx context.Context, instanceIDs []string, delay time.Duration, clean bool) error {
+	experiment, err := i.createInterruptions(ctx, instanceIDs, delay)
 	if err != nil {
 		return err
 	}
-	return i.monitor(ctx, experiment)
+	err = i.monitor(ctx, experiment, delay)
+	return multierr.Append(err, i.Clean(ctx, *experiment))
 }
 
-func (i ITN) monitor(ctx context.Context, experiment *types.Experiment) error {
+// Clean deletes the generated experiment template from FIS
+func (i ITN) Clean(ctx context.Context, experiment types.Experiment) error {
+	_, err := i.fisAPI.DeleteExperimentTemplate(ctx, &fis.DeleteExperimentTemplateInput{Id: experiment.ExperimentTemplateId})
+	return err
+}
+
+func (i ITN) monitor(ctx context.Context, experiment *types.Experiment, delay time.Duration) error {
+	fmt.Println("===================================================================")
+	fmt.Printf("Experiment Summary: \n")
+	fmt.Printf("      ID: %s\n", *experiment.Id)
+	fmt.Printf("Role ARN: %s\n", *experiment.RoleArn)
+	fmt.Printf("  Action: %s\n", spotITNAction)
+	fmt.Println("Targets:")
+	for _, target := range experiment.Targets {
+		for _, arn := range target.ResourceArns {
+			fmt.Printf("  - %s\n", i.arnToInstanceID(arn))
+		}
+	}
+	fmt.Println("===================================================================")
+	if experiment.StartTime != nil && time.Until(*experiment.StartTime) < delay {
+		timeUntilStart := delay - time.Until(*experiment.StartTime)
+		fmt.Printf("⏳ Experiment will start in %d seconds", int(timeUntilStart.Seconds()))
+		time.Sleep(timeUntilStart)
+	}
+	fmt.Printf("🤩 Experiment %s is starting!\n", *experiment.Id)
 	ticker := time.NewTicker(5 * time.Second)
 	for {
 		select {
@@ -91,12 +121,14 @@ func (i ITN) monitor(ctx context.Context, experiment *types.Experiment) error {
 			if err != nil {
 				return err
 			}
-
-			if experimentUpdate.Experiment.State.Status == types.ExperimentStatusFailed ||
-				experimentUpdate.Experiment.State.Status == types.ExperimentStatusStopped {
+			switch experimentUpdate.Experiment.State.Status {
+			case types.ExperimentStatusPending:
+				fmt.Println("⏲ Experiment is pending")
+			case types.ExperimentStatusInitiating:
+				fmt.Println("🔧 Experiment is initializing")
+			case types.ExperimentStatusFailed, types.ExperimentStatusStopped:
 				return fmt.Errorf(*experimentUpdate.Experiment.State.Reason)
-			}
-			if experimentUpdate.Experiment.State.Status == types.ExperimentStatusCompleted {
+			case types.ExperimentStatusCompleted:
 				return nil
 			}
 		case <-ctx.Done():
@@ -105,7 +137,7 @@ func (i ITN) monitor(ctx context.Context, experiment *types.Experiment) error {
 	}
 }
 
-func (i ITN) createInterruptions(ctx context.Context, instanceIDs []string) (*types.Experiment, error) {
+func (i ITN) createInterruptions(ctx context.Context, instanceIDs []string, delay time.Duration) (*types.Experiment, error) {
 	accountID, err := i.getAccountID(ctx)
 	if err != nil {
 		return nil, err
@@ -124,9 +156,11 @@ func (i ITN) createInterruptions(ctx context.Context, instanceIDs []string) (*ty
 	for j, batch := range i.batchInstances(instanceIDs, 5) {
 		key := fmt.Sprintf("itn%d", j)
 		template.Actions[key] = types.CreateExperimentTemplateActionInput{
-			ActionId: ptr.String("aws:ec2:send-spot-instance-interruptions"),
+			ActionId: ptr.String(spotITNAction),
 			Parameters: map[string]string{
-				"durationBeforeInterruption": "PT4M",
+				// durationBeforeInterruption is the time before the instance is terminated, so we add 2 minutes
+				// so that a user can configure the notificatin delay rather than the termination delay.
+				"durationBeforeInterruption": fmt.Sprintf("PT%dS", int((time.Minute*2 + delay).Seconds())),
 			},
 			Targets: map[string]string{"SpotInstances": key},
 		}
@@ -196,9 +230,13 @@ func (i ITN) getAccountID(ctx context.Context) (string, error) {
 }
 
 func (i ITN) instanceIDsToARNs(instanceIDs []string, region string, accountID string) []string {
-	arns := []string{}
+	var arns []string
 	for _, instanceID := range instanceIDs {
 		arns = append(arns, fmt.Sprintf("arn:aws:ec2:%s:%s:instance/%s", region, accountID, instanceID))
 	}
 	return arns
+}
+
+func (i ITN) arnToInstanceID(arn string) string {
+	return strings.Split(strings.Split(arn, ":")[5], "/")[1]
 }
