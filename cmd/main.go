@@ -25,9 +25,12 @@ import (
 )
 
 // TODOs(bwagner5):
-//   1. Option to pass tags instead of instance IDs
-//   2. Option to pass an OD instance and have this tool create a matching instance that is spot to test an interruption
-//   3. Automated chaos - give this tool a tag or vpc and allow it to randomly interrupt spot instances at will
+//   1. Region and AWS Profile CLI Args
+//   2. Validate instance id before FIS fails the experiment
+//   3. List view of valid instances to interrupt
+//   4. Option to pass tags instead of instance IDs
+//   5. Option to pass an OD instance and have this tool create a matching instance that is spot to test an interruption
+//   6. Automated chaos - give this tool a tag or vpc and allow it to randomly interrupt spot instances at will
 
 var version string
 

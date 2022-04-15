@@ -95,21 +95,24 @@ func (i ITN) Clean(ctx context.Context, experiment types.Experiment) error {
 }
 
 func (i ITN) monitor(ctx context.Context, experiment *types.Experiment, delay time.Duration) error {
+	// TODO: use a table lib to make this prettier
 	fmt.Println("===================================================================")
-	fmt.Printf("Experiment Summary: \n")
-	fmt.Printf("      ID: %s\n", *experiment.Id)
-	fmt.Printf("Role ARN: %s\n", *experiment.RoleArn)
-	fmt.Printf("  Action: %s\n", spotITNAction)
-	fmt.Println("Targets:")
+	fmt.Printf("📖 Experiment Summary: \n")
+	fmt.Printf("        ID: %s\n", *experiment.Id)
+	fmt.Printf("  Role ARN: %s\n", *experiment.RoleArn)
+	fmt.Printf("    Action: %s\n", spotITNAction)
+	fmt.Println("  Targets:")
 	for _, target := range experiment.Targets {
 		for _, arn := range target.ResourceArns {
-			fmt.Printf("  - %s\n", i.arnToInstanceID(arn))
+			fmt.Printf("    - %s\n", i.arnToInstanceID(arn))
 		}
 	}
 	fmt.Println("===================================================================")
+	time.Sleep(2 * time.Second)
+	fmt.Println("✅ Rebalance Recommendation sent!")
 	if experiment.StartTime != nil && time.Until(*experiment.StartTime) < delay {
 		timeUntilStart := delay - time.Until(*experiment.StartTime)
-		fmt.Printf("⏳ Experiment will start in %d seconds", int(timeUntilStart.Seconds()))
+		fmt.Printf("⏳ Experiment will start in %d seconds\n", int(timeUntilStart.Seconds()))
 		time.Sleep(timeUntilStart)
 	}
 	fmt.Printf("🤩 Experiment %s is starting!\n", *experiment.Id)
