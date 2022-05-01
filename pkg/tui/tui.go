@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package main
+package tui
 
 import (
 	"context"
@@ -20,8 +20,12 @@ import (
 
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/itn/pkg/itn"
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
+
+var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 
 type model struct {
 	choices     []ec2types.Instance
@@ -30,15 +34,20 @@ type model struct {
 	ctx         context.Context
 	itn         *itn.ITN
 	initialized bool
+	spinner     spinner.Model
 }
 
 type spotInstancesMsg []ec2types.Instance
 
 func NewModel(ctx context.Context, itn *itn.ITN) model {
+	sp := spinner.New()
+	sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("206"))
+	sp.Spinner = spinner.Points
 	return model{
 		selected: map[int]*ec2types.Instance{},
 		ctx:      ctx,
 		itn:      itn,
+		spinner:  sp,
 	}
 }
 
@@ -53,7 +62,10 @@ func initialModel(ctx context.Context, itn *itn.ITN) tea.Cmd {
 }
 
 func (m model) Init() tea.Cmd {
-	return initialModel(m.ctx, m.itn)
+	return tea.Batch(
+		spinner.Tick,
+		initialModel(m.ctx, m.itn),
+	)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -61,6 +73,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case spotInstancesMsg:
 		m.choices = msg
 		m.initialized = true
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		m.spinner, cmd = m.spinner.Update(msg)
+		return m, cmd
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
@@ -104,10 +120,10 @@ func instanceName(i ec2types.Instance) string {
 
 func (m model) View() string {
 	if !m.initialized {
-		return "Finding Spot instances...\n\n\nPress q to quit.\n"
+		return fmt.Sprintf("Finding Spot instances %s\n%s", m.spinner.View(), help())
 	}
 	if len(m.choices) == 0 {
-		return "There are currently no Spot instances running...\n\n\nPress q to quit.\n"
+		return fmt.Sprintf("There are currently no Spot instances running...\n\n%s", help())
 	}
 	// The header
 	s := "Which Spot instances would you like to interrupt?\n\n"
@@ -132,8 +148,12 @@ func (m model) View() string {
 	}
 
 	// The footer
-	s += "\nPress q to quit.\n"
+	s += help()
 
 	// Send the UI for rendering
 	return s
+}
+
+func help() string {
+	return helpStyle("\nPress q to quit.\n")
 }

@@ -21,6 +21,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/itn/pkg/itn"
+	"github.com/aws/itn/pkg/tui"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )
@@ -61,7 +62,7 @@ func main() {
 			}
 			interrupter := itn.New(cfg)
 			if options.interactive {
-				p := tea.NewProgram(NewModel(ctx, interrupter))
+				p := tea.NewProgram(tui.NewModel(ctx, interrupter))
 				if err := p.Start(); err != nil {
 					fmt.Printf("❌ Error initializing TUI: %v", err)
 					os.Exit(1)
