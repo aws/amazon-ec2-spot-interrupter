@@ -25,12 +25,10 @@ import (
 )
 
 // TODOs(bwagner5):
-//   1. Region and AWS Profile CLI Args
-//   2. Validate instance id before FIS fails the experiment
-//   3. List view of valid instances to interrupt
-//   4. Option to pass tags instead of instance IDs
-//   5. Option to pass an OD instance and have this tool create a matching instance that is spot to test an interruption
-//   6. Automated chaos - give this tool a tag or vpc and allow it to randomly interrupt spot instances at will
+//   1. List view of valid instances to interrupt
+//   2. Option to pass tags instead of instance IDs
+//   3. Option to pass an OD instance and have this tool create a matching instance that is spot to test an interruption
+//   4. Automated chaos - give this tool a tag or vpc and allow it to randomly interrupt spot instances at will
 
 var version string
 
@@ -39,33 +37,38 @@ type Options struct {
 	delay       time.Duration
 	clean       bool
 	version     bool
+	region      string
+	profile     string
 }
 
 func main() {
 	options := Options{}
 	rootCmd := &cobra.Command{
 		Use:   "ec2-spot-interrupter",
-		Short: "ec2-spot-interrupter is a simple CLI tool that triggers Amazon EC2 Spot Interruption Termination Notifications (ITNs) and Rebalance Recommendations.",
+		Short: "ec2-spot-interrupter is a simple CLI tool that triggers Amazon EC2 Spot Instance Interruption Notifications and Rebalance Recommendations.",
 		Run: func(cmd *cobra.Command, _ []string) {
 			if options.version {
 				fmt.Println(version)
 				os.Exit(0)
 			}
 			ctx := context.Background()
-			cfg, err := config.LoadDefaultConfig(ctx)
+			cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(options.region), config.WithSharedConfigProfile(options.profile))
 			if err != nil {
-				panic(err)
-			}
-			if err := itn.New(cfg).Interrupt(context.Background(), options.instanceIDs, options.delay, options.clean); err != nil {
-				fmt.Printf("❌ %s", err)
+				fmt.Printf("❌ %s\n", err)
 				os.Exit(1)
 			}
-			fmt.Printf("✅ Successfully sent spot rebalance recommendation and ITN to %v\n", options.instanceIDs)
+			if err := itn.New(cfg).Interrupt(context.Background(), options.instanceIDs, options.delay, options.clean); err != nil {
+				fmt.Printf("❌ %s\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("✅ Successfully sent spot rebalance recommendation and instance interruption to %v\n", options.instanceIDs)
 		},
 	}
 	rootCmd.PersistentFlags().StringSliceVarP(&options.instanceIDs, "instance-ids", "i", []string{}, "instance IDs to interrupt")
 	rootCmd.PersistentFlags().BoolVarP(&options.clean, "clean", "c", true, "clean up the underlying simulations")
 	rootCmd.PersistentFlags().DurationVarP(&options.delay, "delay", "d", time.Second*15, "duration until the interruption notification is sent")
 	rootCmd.PersistentFlags().BoolVarP(&options.version, "version", "v", false, "the version")
+	rootCmd.PersistentFlags().StringVarP(&options.region, "region", "r", "", "the AWS Region")
+	rootCmd.PersistentFlags().StringVarP(&options.profile, "profile", "p", "", "the AWS Profile")
 	rootCmd.Execute()
 }

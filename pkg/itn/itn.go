@@ -21,6 +21,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/fis"
 	"github.com/aws/aws-sdk-go-v2/service/fis/types"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
@@ -66,6 +68,7 @@ type ITN struct {
 	stsAPI *sts.Client
 	fisAPI *fis.Client
 	iamAPI *iam.Client
+	ec2API *ec2.Client
 }
 
 func New(cfg aws.Config) *ITN {
@@ -74,18 +77,43 @@ func New(cfg aws.Config) *ITN {
 		stsAPI: sts.NewFromConfig(cfg),
 		fisAPI: fis.NewFromConfig(cfg),
 		iamAPI: iam.NewFromConfig(cfg),
+		ec2API: ec2.NewFromConfig(cfg),
 	}
 }
 
 // Interrupt will start an FIS experiment to send Spot ITNs to the instance IDs specified and then monitor
 // the experiment for the progress.
 func (i ITN) Interrupt(ctx context.Context, instanceIDs []string, delay time.Duration, clean bool) error {
+	if err := i.validate(ctx, instanceIDs); err != nil {
+		return err
+	}
 	experiment, err := i.createInterruptions(ctx, instanceIDs, delay)
 	if err != nil {
 		return err
 	}
 	err = i.monitor(ctx, experiment, delay)
 	return multierr.Append(err, i.Clean(ctx, *experiment))
+}
+
+func (i ITN) validate(ctx context.Context, instanceIDs []string) error {
+	paginator := ec2.NewDescribeInstancesPaginator(i.ec2API, &ec2.DescribeInstancesInput{InstanceIds: instanceIDs})
+	var instances []ec2types.Instance
+	for paginator.HasMorePages() {
+		out, err := paginator.NextPage(ctx)
+		if err != nil {
+			return err
+		}
+		for _, r := range out.Reservations {
+			instances = append(instances, r.Instances...)
+		}
+	}
+	var err error
+	for _, instance := range instances {
+		if instance.InstanceLifecycle != ec2types.InstanceLifecycleTypeSpot {
+			err = multierr.Append(err, fmt.Errorf("%s is not a Spot instance", *instance.InstanceId))
+		}
+	}
+	return err
 }
 
 // Clean deletes the generated experiment template from FIS
