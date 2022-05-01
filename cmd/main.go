@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/itn/pkg/cli"
 	"github.com/aws/itn/pkg/itn"
 	"github.com/aws/itn/pkg/tui"
 	tea "github.com/charmbracelet/bubbletea"
@@ -27,10 +28,9 @@ import (
 )
 
 // TODOs(bwagner5):
-//   1. List view of valid instances to interrupt
-//   2. Option to pass tags instead of instance IDs
-//   3. Option to pass an OD instance and have this tool create a matching instance that is spot to test an interruption
-//   4. Automated chaos - give this tool a tag or vpc and allow it to randomly interrupt spot instances at will
+//   1. Option to pass tags instead of instance IDs
+//   2. Option to pass an OD instance and have this tool create a matching instance that is spot to test an interruption
+//   3. Automated chaos - give this tool a tag or vpc and allow it to randomly interrupt spot instances at will
 
 var version string
 
@@ -69,11 +69,12 @@ func main() {
 				}
 				os.Exit(0)
 			}
-			if err := interrupter.Interrupt(context.Background(), options.instanceIDs, options.delay, options.clean); err != nil {
+			experiment, events, err := interrupter.Interrupt(context.Background(), options.instanceIDs, options.delay, options.clean)
+			if err != nil {
 				fmt.Printf("❌ %s\n", err)
 				os.Exit(1)
 			}
-			fmt.Printf("✅ Successfully sent spot rebalance recommendation and instance interruption to %v\n", options.instanceIDs)
+			cli.PrintMonitor(experiment, events)
 		},
 	}
 	rootCmd.PersistentFlags().StringSliceVarP(&options.instanceIDs, "instance-ids", "i", []string{}, "instance IDs to interrupt")

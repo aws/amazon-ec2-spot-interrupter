@@ -60,7 +60,7 @@ const (
 			}
 		]
 	}`
-	spotITNAction = "aws:ec2:send-spot-instance-interruptions"
+	SpotITNAction = "aws:ec2:send-spot-instance-interruptions"
 )
 
 type ITN struct {
@@ -83,16 +83,37 @@ func New(cfg aws.Config) *ITN {
 
 // Interrupt will start an FIS experiment to send Spot ITNs to the instance IDs specified and then monitor
 // the experiment for the progress.
-func (i ITN) Interrupt(ctx context.Context, instanceIDs []string, delay time.Duration, clean bool) error {
+func (i ITN) Interrupt(ctx context.Context, instanceIDs []string, delay time.Duration, clean bool) (*types.Experiment, <-chan Event, error) {
 	if err := i.validate(ctx, instanceIDs); err != nil {
-		return err
+		return nil, nil, err
 	}
 	experiment, err := i.createInterruptions(ctx, instanceIDs, delay)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
-	err = i.monitor(ctx, experiment, delay)
-	return multierr.Append(err, i.Clean(ctx, *experiment))
+	events := make(chan Event, 10)
+	go func() {
+		if clean {
+			defer func() {
+				if err := i.Clean(ctx, *experiment); err != nil {
+					events <- Event{
+						Timestamp: time.Now(),
+						Message:   fmt.Sprintf("❌ Error cleaning up FIS Experiment: %v", err),
+						NextEvent: 0,
+					}
+				}
+			}()
+		}
+		defer close(events)
+		if err := i.monitor(ctx, events, experiment, delay); err != nil {
+			events <- Event{
+				Timestamp: time.Now(),
+				Message:   fmt.Sprintf("❌ Error executing: %v", err),
+				NextEvent: 0,
+			}
+		}
+	}()
+	return experiment, events, nil
 }
 
 func (i ITN) validate(ctx context.Context, instanceIDs []string) error {
@@ -154,28 +175,26 @@ func (i ITN) Clean(ctx context.Context, experiment types.Experiment) error {
 	return err
 }
 
-func (i ITN) monitor(ctx context.Context, experiment *types.Experiment, delay time.Duration) error {
-	// TODO: use a table lib to make this prettier
-	fmt.Println("===================================================================")
-	fmt.Printf("📖 Experiment Summary: \n")
-	fmt.Printf("        ID: %s\n", *experiment.Id)
-	fmt.Printf("  Role ARN: %s\n", *experiment.RoleArn)
-	fmt.Printf("    Action: %s\n", spotITNAction)
-	fmt.Println("   Targets:")
-	for _, target := range experiment.Targets {
-		for _, arn := range target.ResourceArns {
-			fmt.Printf("    - %s\n", i.arnToInstanceID(arn))
-		}
+type Event struct {
+	Message   string
+	NextEvent time.Duration
+	Timestamp time.Time
+}
+
+func (i ITN) monitor(ctx context.Context, events chan Event, experiment *types.Experiment, delay time.Duration) error {
+	events <- Event{
+		Timestamp: time.Now(),
+		Message:   "✅ Rebalance Recommendation sent",
 	}
-	fmt.Println("===================================================================")
-	time.Sleep(2 * time.Second)
-	fmt.Println("✅ Rebalance Recommendation sent")
 	if experiment.StartTime != nil && time.Until(*experiment.StartTime) < delay {
 		timeUntilStart := delay - time.Until(*experiment.StartTime)
-		fmt.Printf("⏳ Experiment will start in %d seconds\n", int(timeUntilStart.Seconds()))
+		events <- Event{
+			Message:   fmt.Sprintf("⏳ Interruption will be sent in %d seconds", int(timeUntilStart.Seconds())),
+			NextEvent: timeUntilStart,
+			Timestamp: time.Now(),
+		}
 		time.Sleep(timeUntilStart)
 	}
-	fmt.Printf("🤩 Experiment %s is starting\n", *experiment.Id)
 	ticker := time.NewTicker(5 * time.Second)
 	for {
 		select {
@@ -186,15 +205,28 @@ func (i ITN) monitor(ctx context.Context, experiment *types.Experiment, delay ti
 			}
 			switch experimentUpdate.Experiment.State.Status {
 			case types.ExperimentStatusPending:
-				fmt.Println("⏲ Experiment is pending")
+				events <- Event{
+					Timestamp: time.Now(),
+					Message:   "⏲ Interruption Experiment is pending",
+				}
 			case types.ExperimentStatusInitiating:
-				fmt.Println("🔧 Experiment is initializing")
+				events <- Event{
+					Timestamp: time.Now(),
+					Message:   "🔧 Interruption Experiment is initializing",
+				}
 			case types.ExperimentStatusFailed, types.ExperimentStatusStopped:
 				return fmt.Errorf(*experimentUpdate.Experiment.State.Reason)
 			case types.ExperimentStatusCompleted:
-				fmt.Println("✅ Spot 2-minute Interruption Notification sent")
+				events <- Event{
+					Timestamp: time.Now(),
+					Message:   "✅ Spot 2-minute Interruption Notification sent",
+					NextEvent: time.Minute * 2,
+				}
 				time.Sleep(2 * time.Minute)
-				fmt.Println("✅ Spot Instance Shutdown sent")
+				events <- Event{
+					Timestamp: time.Now(),
+					Message:   "✅ Spot Instance Shutdown sent",
+				}
 				return nil
 			}
 		case <-ctx.Done():
@@ -222,7 +254,7 @@ func (i ITN) createInterruptions(ctx context.Context, instanceIDs []string, dela
 	for j, batch := range i.batchInstances(instanceIDs, 5) {
 		key := fmt.Sprintf("itn%d", j)
 		template.Actions[key] = types.CreateExperimentTemplateActionInput{
-			ActionId: ptr.String(spotITNAction),
+			ActionId: ptr.String(SpotITNAction),
 			Parameters: map[string]string{
 				// durationBeforeInterruption is the time before the instance is terminated, so we add 2 minutes
 				// so that a user can configure the notificatin delay rather than the termination delay.
@@ -303,6 +335,6 @@ func (i ITN) instanceIDsToARNs(instanceIDs []string, region string, accountID st
 	return arns
 }
 
-func (i ITN) arnToInstanceID(arn string) string {
+func ARNToInstanceID(arn string) string {
 	return strings.Split(strings.Split(arn, ":")[5], "/")[1]
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/samber/lo"
 )
 
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
@@ -38,6 +39,7 @@ type model struct {
 }
 
 type spotInstancesMsg []ec2types.Instance
+type retrySpotInstances time.Time
 
 func NewModel(ctx context.Context, itn *itn.ITN) model {
 	sp := spinner.New()
@@ -73,6 +75,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case spotInstancesMsg:
 		m.choices = msg
 		m.initialized = true
+		if len(msg) == 0 {
+			return m, tea.Every(time.Second*15, func(t time.Time) tea.Msg {
+				return retrySpotInstances(t)
+			})
+		}
+	case retrySpotInstances:
+		return m, initialModel(m.ctx, m.itn)
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
@@ -96,14 +105,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.selected[m.cursor] = &m.choices[m.cursor]
 			}
 		case "enter":
-			var instanceIDs []string
-			for _, instance := range m.selected {
-				instanceIDs = append(instanceIDs, *instance.InstanceId)
-			}
-			if err := m.itn.Interrupt(m.ctx, instanceIDs, time.Second*15, true); err != nil {
-				return m, tea.Quit
-			}
-			return m, tea.Quit
+			opts := NewOptions(m.ctx, m.itn, lo.Values(m.selected))
+			return opts, opts.Init()
 		}
 	}
 	return m, nil
@@ -123,7 +126,7 @@ func (m model) View() string {
 		return fmt.Sprintf("Finding Spot instances %s\n%s", m.spinner.View(), help())
 	}
 	if len(m.choices) == 0 {
-		return fmt.Sprintf("There are currently no Spot instances running...\n\n%s", help())
+		return fmt.Sprintf("There are currently no Spot instances running...\nI'll keep checking though %s\n%s", m.spinner.View(), help())
 	}
 	// The header
 	s := "Which Spot instances would you like to interrupt?\n\n"
