@@ -96,6 +96,9 @@ func (i ITN) Interrupt(ctx context.Context, instanceIDs []string, delay time.Dur
 }
 
 func (i ITN) validate(ctx context.Context, instanceIDs []string) error {
+	if len(instanceIDs) == 0 {
+		return errors.New("no instances specified")
+	}
 	paginator := ec2.NewDescribeInstancesPaginator(i.ec2API, &ec2.DescribeInstancesInput{InstanceIds: instanceIDs})
 	var instances []ec2types.Instance
 	for paginator.HasMorePages() {
@@ -112,8 +115,37 @@ func (i ITN) validate(ctx context.Context, instanceIDs []string) error {
 		if instance.InstanceLifecycle != ec2types.InstanceLifecycleTypeSpot {
 			err = multierr.Append(err, fmt.Errorf("%s is not a Spot instance", *instance.InstanceId))
 		}
+		if instance.State.Name != ec2types.InstanceStateNameRunning {
+			err = multierr.Append(err, fmt.Errorf("%s is not running", *instance.InstanceId))
+		}
 	}
 	return err
+}
+
+func (i ITN) SpotInstances(ctx context.Context) ([]ec2types.Instance, error) {
+	paginator := ec2.NewDescribeInstancesPaginator(i.ec2API, &ec2.DescribeInstancesInput{
+		Filters: []ec2types.Filter{
+			{
+				Name:   aws.String("instance-lifecycle"),
+				Values: []string{string(ec2types.InstanceLifecycleSpot)},
+			},
+			{
+				Name:   aws.String("instance-state-name"),
+				Values: []string{string(ec2types.InstanceStateNameRunning)},
+			},
+		},
+	})
+	var instances []ec2types.Instance
+	for paginator.HasMorePages() {
+		out, err := paginator.NextPage(ctx)
+		if err != nil {
+			return instances, err
+		}
+		for _, r := range out.Reservations {
+			instances = append(instances, r.Instances...)
+		}
+	}
+	return instances, nil
 }
 
 // Clean deletes the generated experiment template from FIS
@@ -129,7 +161,7 @@ func (i ITN) monitor(ctx context.Context, experiment *types.Experiment, delay ti
 	fmt.Printf("        ID: %s\n", *experiment.Id)
 	fmt.Printf("  Role ARN: %s\n", *experiment.RoleArn)
 	fmt.Printf("    Action: %s\n", spotITNAction)
-	fmt.Println("  Targets:")
+	fmt.Println("   Targets:")
 	for _, target := range experiment.Targets {
 		for _, arn := range target.ResourceArns {
 			fmt.Printf("    - %s\n", i.arnToInstanceID(arn))
@@ -137,13 +169,13 @@ func (i ITN) monitor(ctx context.Context, experiment *types.Experiment, delay ti
 	}
 	fmt.Println("===================================================================")
 	time.Sleep(2 * time.Second)
-	fmt.Println("✅ Rebalance Recommendation sent!")
+	fmt.Println("✅ Rebalance Recommendation sent")
 	if experiment.StartTime != nil && time.Until(*experiment.StartTime) < delay {
 		timeUntilStart := delay - time.Until(*experiment.StartTime)
 		fmt.Printf("⏳ Experiment will start in %d seconds\n", int(timeUntilStart.Seconds()))
 		time.Sleep(timeUntilStart)
 	}
-	fmt.Printf("🤩 Experiment %s is starting!\n", *experiment.Id)
+	fmt.Printf("🤩 Experiment %s is starting\n", *experiment.Id)
 	ticker := time.NewTicker(5 * time.Second)
 	for {
 		select {
@@ -160,6 +192,9 @@ func (i ITN) monitor(ctx context.Context, experiment *types.Experiment, delay ti
 			case types.ExperimentStatusFailed, types.ExperimentStatusStopped:
 				return fmt.Errorf(*experimentUpdate.Experiment.State.Reason)
 			case types.ExperimentStatusCompleted:
+				fmt.Println("✅ Spot 2-minute Interruption Notification sent")
+				time.Sleep(2 * time.Minute)
+				fmt.Println("✅ Spot Instance Shutdown sent")
 				return nil
 			}
 		case <-ctx.Done():

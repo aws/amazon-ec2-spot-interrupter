@@ -21,6 +21,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/itn/pkg/itn"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )
 
@@ -39,6 +40,7 @@ type Options struct {
 	version     bool
 	region      string
 	profile     string
+	interactive bool
 }
 
 func main() {
@@ -57,7 +59,16 @@ func main() {
 				fmt.Printf("❌ %s\n", err)
 				os.Exit(1)
 			}
-			if err := itn.New(cfg).Interrupt(context.Background(), options.instanceIDs, options.delay, options.clean); err != nil {
+			interrupter := itn.New(cfg)
+			if options.interactive {
+				p := tea.NewProgram(NewModel(ctx, interrupter))
+				if err := p.Start(); err != nil {
+					fmt.Printf("❌ Error initializing TUI: %v", err)
+					os.Exit(1)
+				}
+				os.Exit(0)
+			}
+			if err := interrupter.Interrupt(context.Background(), options.instanceIDs, options.delay, options.clean); err != nil {
 				fmt.Printf("❌ %s\n", err)
 				os.Exit(1)
 			}
@@ -68,6 +79,7 @@ func main() {
 	rootCmd.PersistentFlags().BoolVarP(&options.clean, "clean", "c", true, "clean up the underlying simulations")
 	rootCmd.PersistentFlags().DurationVarP(&options.delay, "delay", "d", time.Second*15, "duration until the interruption notification is sent")
 	rootCmd.PersistentFlags().BoolVarP(&options.version, "version", "v", false, "the version")
+	rootCmd.PersistentFlags().BoolVar(&options.interactive, "interactive", false, "interactive TUI")
 	rootCmd.PersistentFlags().StringVarP(&options.region, "region", "r", "", "the AWS Region")
 	rootCmd.PersistentFlags().StringVarP(&options.profile, "profile", "p", "", "the AWS Profile")
 	rootCmd.Execute()
