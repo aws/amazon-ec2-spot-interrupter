@@ -60,7 +60,8 @@ const (
 			}
 		]
 	}`
-	SpotITNAction = "aws:ec2:send-spot-instance-interruptions"
+	SpotITNAction  = "aws:ec2:send-spot-instance-interruptions"
+	fisTargetLimit = 5
 )
 
 type ITN struct {
@@ -99,7 +100,6 @@ func (i ITN) Interrupt(ctx context.Context, instanceIDs []string, delay time.Dur
 					events <- Event{
 						Timestamp: time.Now(),
 						Message:   fmt.Sprintf("❌ Error cleaning up FIS Experiment: %v", err),
-						NextEvent: 0,
 					}
 				}
 			}()
@@ -109,7 +109,6 @@ func (i ITN) Interrupt(ctx context.Context, instanceIDs []string, delay time.Dur
 			events <- Event{
 				Timestamp: time.Now(),
 				Message:   fmt.Sprintf("❌ Error executing: %v", err),
-				NextEvent: 0,
 			}
 		}
 	}()
@@ -207,7 +206,7 @@ func (i ITN) monitor(ctx context.Context, events chan Event, experiment *types.E
 			case types.ExperimentStatusPending:
 				events <- Event{
 					Timestamp: time.Now(),
-					Message:   "⏲ Interruption Experiment is pending",
+					Message:   "⏰ Interruption Experiment is pending",
 				}
 			case types.ExperimentStatusInitiating:
 				events <- Event{
@@ -251,7 +250,7 @@ func (i ITN) createInterruptions(ctx context.Context, instanceIDs []string, dela
 		RoleArn:        roleARN,
 		Description:    aws.String(fmt.Sprintf("trigger spot ITN for instances %v", instanceIDs)),
 	}
-	for j, batch := range i.batchInstances(instanceIDs, 5) {
+	for j, batch := range i.batchInstances(instanceIDs, fisTargetLimit) {
 		key := fmt.Sprintf("itn%d", j)
 		template.Actions[key] = types.CreateExperimentTemplateActionInput{
 			ActionId: ptr.String(SpotITNAction),
