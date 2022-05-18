@@ -20,10 +20,8 @@ import (
 
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/itn/pkg/itn"
-	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type options struct {
@@ -32,7 +30,6 @@ type options struct {
 	itn            *itn.ITN
 	textInput      textinput.Model
 	validationMsg  string
-	spinner        spinner.Model
 	processingOpts bool
 }
 
@@ -42,15 +39,11 @@ func NewOptions(ctx context.Context, itn *itn.ITN, instances []*ec2types.Instanc
 	ti.Focus()
 	ti.CharLimit = 20
 	ti.Width = 20
-	sp := spinner.New()
-	sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("206"))
-	sp.Spinner = spinner.Points
 	return options{
 		ctx:       ctx,
 		itn:       itn,
 		instances: instances,
 		textInput: ti,
-		spinner:   sp,
 	}
 }
 
@@ -79,22 +72,15 @@ func (o options) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		monitor := NewMonitor(experiment, events)
 		return monitor, monitor.Init()
-	case spinner.TickMsg:
-		var cmd tea.Cmd
-		o.spinner, cmd = o.spinner.Update(msg)
-		return o, cmd
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return o, tea.Quit
 		case "enter":
 			o.processingOpts = true
-			return o, tea.Batch(
-				o.spinner.Tick,
-				func() tea.Msg {
-					return startInterruptMsg(true)
-				},
-			)
+			return o, func() tea.Msg {
+				return startInterruptMsg(true)
+			}
 		}
 	}
 	o.textInput, cmd = o.textInput.Update(msg)
@@ -113,7 +99,7 @@ func (o *options) validateDelay() (time.Duration, error) {
 
 func (o options) View() string {
 	if o.processingOpts {
-		return fmt.Sprintf("Creating Interruption Experiment %s\n%s"+o.spinner.View(), help())
+		return fmt.Sprintf("Creating Interruption Experiment \n%s", help())
 	}
 	return fmt.Sprintf(
 		"How long to wait before sending the interruption notifications?\n%s\n%s\n%s",
