@@ -1,7 +1,7 @@
 # Amazon EC2 Spot Interrupter
 The `ec2-spot-interrupter` is a simple CLI tool that triggers Amazon EC2 Spot Interruption Notifications and Rebalance Recommendations.
 
-[![Actions Status](https://github.com/aws/amazon-ec2-spot-interrupter/workflows/Go/badge.svg)](https://github.com/aws/amazon-ec2-spot-interrupter/actions)
+[![Action Status](https://github.com/aws/amazon-ec2-spot-interrupter/actions/workflows/release.yaml/badge.svg)](https://github.com/aws/amazon-ec2-spot-interrupter/actions/workflows/release.yaml)
 
 
 ## Installation
@@ -25,7 +25,7 @@ If you are looking for a tool to test Spot Interruption Notifications and Rebala
 
 ## Usage
 
-```bash
+```
 $ ec2-spot-interrupter is a simple CLI tool that triggers Amazon EC2 Spot Instance Interruption Notifications and Rebalance Recommendations.
 
 Usage:
@@ -50,7 +50,7 @@ $ ec2-spot-interrupter --interactive
 
 Or use the regular CLI options:
 
-```bash
+```
 $ ec2-spot-interrupter --instance-ids i-0208a716009d70b36
 ===================================================================
 📖 Experiment Summary:
