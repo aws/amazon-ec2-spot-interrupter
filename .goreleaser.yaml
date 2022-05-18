@@ -57,7 +57,7 @@ brews:
 
     # Template of your app's description.
     # Default is empty.
-    description: "Software to create fast and easy drum rolls."
+    description: "A simple CLI tool that triggers Amazon EC2 Spot Interruption Notifications and Rebalance Recommendations."
 
     # SPDX identifier of your app's license.
     # Default is empty.

@@ -6,7 +6,7 @@ The `ec2-spot-interrupter` is a simple CLI tool that triggers Amazon EC2 Spot In
 
 ## Installation
 
-```
+```bash
 brew tap aws/tap
 brew install aws/ec2-spot-interrupter
 ```
@@ -14,20 +14,19 @@ brew install aws/ec2-spot-interrupter
 ## About
 
 [Amazon EC2 Spot](https://aws.amazon.com/ec2/spot/) Instances let you run flexible, fault-tolerant, or stateless applications in the AWS Cloud at up to a 90% discount from On-Demand prices. 
-Spot instances are regular EC2 capacity that can be reclaimed by AWS with a 2-minute notification called the [Interruption Termination Notification (ITN)](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-interruptions.html).
-Applications that are able to gracefully handle this notification and respond by check pointing or draining work can leverage Spot for deeply discounted compute resources! In addition to ITNs, [Rebalance Recommendation Events](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/rebalance-recommendations.html) are sent to spot instances that are at higher risk of receiving an ITN. Handling Rebalance Recommendations can potentially give your application even more time to gracefully shutdown than the 2 minutes an ITN would give you.
+Spot instances are regular EC2 capacity that can be reclaimed by AWS with a 2-minute notification called the [Interruption Notification](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-interruptions.html).
+Applications that are able to gracefully handle this notification and respond by check pointing or draining work can leverage Spot for deeply discounted compute resources! In addition to Interruption Notifications, [Rebalance Recommendation Events](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/rebalance-recommendations.html) are sent to spot instances that are at higher risk of being interrupted. Handling Rebalance Recommendations can potentially give your application even more time to gracefully shutdown than the 2 minutes an Interruption Notification would give you.
 
-It can be challenging to test your application's handling of Spot ITNs and Rebalance Recommendations. The [AWS Fault Injection Simulator](https://aws.amazon.com/fis/) (FIS) supports sending real Spot ITNs and Rebalance Recommendations to your spot instances so that you can test how your application responds. However, since FIS is a general purpose fault injection simulation service, it can be cumbersome to setup the required fault injection experiment templates to execute experiments for Spot. The `ec2-spot-interrupter` CLI tool streamlines this process as it wraps FIS and allows you to simply pass a list of instance IDs which `ec2-spot-interrupter` will use to craft the required experiment templates and then execute those experiments.
+It can be challenging to test your application's handling of Spot Interruption Notifications and Rebalance Recommendations. The [AWS Fault Injection Simulator](https://aws.amazon.com/fis/) (FIS) supports sending real Spot Interruptions and Rebalance Recommendations to your spot instances so that you can test how your application responds. However, since FIS is a general purpose fault injection simulation service, it can be cumbersome to setup the required fault injection experiment templates to execute experiments for Spot. The `ec2-spot-interrupter` CLI tool streamlines this process as it wraps FIS and allows you to simply pass a list of instance IDs which `ec2-spot-interrupter` will use to craft the required experiment templates and then execute those experiments.
 
-For details on how to use the AWS Fault Injection Simulator directly to trigger Spot ITNs, checkout this [blog post](https://aws.amazon.com/blogs/compute/implementing-interruption-tolerance-in-amazon-ec2-spot-with-aws-fault-injection-simulator/).
+For details on how to use the AWS Fault Injection Simulator directly to trigger Spot Interruption Notifications, checkout this [blog post](https://aws.amazon.com/blogs/compute/implementing-interruption-tolerance-in-amazon-ec2-spot-with-aws-fault-injection-simulator/).
 
-If you are looking for a tool to test Spot ITNs and Rebalance Recommendations locally on your laptop (not EC2), then checkout the [EC2 Metadata Mock](https://github.com/aws/amazon-ec2-metadata-mock).
+If you are looking for a tool to test Spot Interruption Notifications and Rebalance Recommendations locally on your laptop (not EC2), then checkout the [EC2 Metadata Mock](https://github.com/aws/amazon-ec2-metadata-mock).
 
 ## Usage
 
-```
-$ ec2-spot-interrupter --help
-ec2-spot-interrupter is a simple CLI tool that triggers Amazon EC2 Spot Interruption Termination Notifications (ITNs) and Rebalance Recommendations.
+```bash
+$ ec2-spot-interrupter is a simple CLI tool that triggers Amazon EC2 Spot Instance Interruption Notifications and Rebalance Recommendations.
 
 Usage:
   ec2-spot-interrupter [flags]
@@ -37,12 +36,34 @@ Flags:
   -d, --delay duration         duration until the interruption notification is sent (default 15s)
   -h, --help                   help for ec2-spot-interrupter
   -i, --instance-ids strings   instance IDs to interrupt
+      --interactive            interactive TUI
+  -p, --profile string         the AWS Profile
+  -r, --region string          the AWS Region
   -v, --version                the version
 ```
 
+Try the interactive TUI mode:
+
+```bash
+$ ec2-spot-interrupter --interactive
 ```
-$ ec2-spot-interrupter --instance-ids i-0123456789 i-9876543210
-✅ Successfully sent spot rebalance recommendation and ITN to [i-0123456789 i-9876543210]
+
+Or use the regular CLI options:
+
+```bash
+$ ec2-spot-interrupter --instance-ids i-0208a716009d70b36
+===================================================================
+📖 Experiment Summary:
+        ID: EXPBCcSv1NvRNTek58
+  Role ARN: arn:aws:iam::1234567890:role/aws-fis-itn
+    Action: aws:ec2:send-spot-instance-interruptions
+   Targets:
+    - i-0208a716009d70b36
+===================================================================
+2022-05-18T11:39:45: ✅ Rebalance Recommendation sent
+2022-05-18T11:39:45: ⏳ Interruption will be sent in 15 seconds
+2022-05-18T11:40:05: ✅ Spot 2-minute Interruption Notification sent
+2022-05-18T11:42:05: ✅ Spot Instance Shutdown sent
 ```
 
 ## Communication
