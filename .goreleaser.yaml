@@ -1,3 +1,4 @@
+project_name: ec2-spot-interrupter
 before:
   hooks:
     - go mod tidy
@@ -10,6 +11,7 @@ builds:
       - linux_arm_6
       - darwin_arm64
       - darwin_amd64
+    binary: ec2-spot-interrupter
 archives:
   - replacements:
       darwin: Darwin
@@ -24,3 +26,53 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+brews:
+  -
+    name: ec2-spot-interrupter
+
+    # GitHub/GitLab repository to push the formula to
+    tap:
+      owner: aws
+      name: homebrew-tap
+
+      # Optionally a token can be provided, if it differs from the token provided to GoReleaser
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+
+    url_template: "http://github.com/aws/amazon-ec2-spot-interrupter/releases/{{ .Tag }}/{{ .ArtifactName }}"
+
+    commit_author:
+      name: ec2-bot
+      email: ec2-bot@no-reply.github.com
+
+    # The project name and current git tag are used in the format string.
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+
+    # Folder inside the repository to put the formula.
+    # Default is the root folder.
+    folder: Formula
+
+    caveats: "ec2-spot-interrupter --interactive"
+
+    homepage: "https://github.com/aws/amazon-ec2-spot-interrupter"
+
+    # Template of your app's description.
+    # Default is empty.
+    description: "Software to create fast and easy drum rolls."
+
+    # SPDX identifier of your app's license.
+    # Default is empty.
+    license: "Apache-2"
+
+    # Setting this will prevent goreleaser to actually try to commit the updated
+    # formula - instead, the formula file will be stored on the dist folder only,
+    # leaving the responsibility of publishing it to the user.
+    # If set to auto, the release will not be uploaded to the homebrew tap
+    # in case there is an indicator for prerelease in the tag e.g. v1.0.0-rc1
+    # Default is false.
+    skip_upload: true
+
+    # So you can `brew test` your formula.
+    # Default is empty.
+    test: |
+      system "#{bin}/program --version"
+      ...
