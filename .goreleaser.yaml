@@ -70,6 +70,4 @@ brews:
 
     # So you can `brew test` your formula.
     # Default is empty.
-    test: |
-      system "#{bin}/program --version"
-      ...
+    test: system "#{bin}/program --version"
