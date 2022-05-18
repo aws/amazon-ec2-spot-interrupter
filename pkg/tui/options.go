@@ -68,6 +68,7 @@ func (o options) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		experiment, events, err := o.itn.Interrupt(o.ctx, instanceIDs, delay, true)
 		if err != nil {
+			fmt.Printf("❌ %s\n", err)
 			return o, tea.Quit
 		}
 		monitor := NewMonitor(experiment, events)
