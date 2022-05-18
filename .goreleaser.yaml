@@ -35,7 +35,7 @@ brews:
       owner: aws
       name: homebrew-tap
 
-    url_template: "http://github.com/aws/amazon-ec2-spot-interrupter/releases/{{ .Tag }}/{{ .ArtifactName }}"
+    url_template: "https://github.com/aws/amazon-ec2-spot-interrupter/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
 
     commit_author:
       name: ec2-bot
