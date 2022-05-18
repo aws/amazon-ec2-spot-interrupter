@@ -1,5 +1,5 @@
 # Amazon EC2 Spot Interrupter
-The `ec2-spot-interrupter` is a simple CLI tool that triggers Amazon EC2 Spot Interruption Termination Notifications (ITNs) and Rebalance Recommendations.
+The `ec2-spot-interrupter` is a simple CLI tool that triggers Amazon EC2 Spot Interruption Notifications and Rebalance Recommendations.
 
 [![Actions Status](https://github.com/aws/amazon-ec2-spot-interrupter/workflows/Go/badge.svg)](https://github.com/aws/amazon-ec2-spot-interrupter/actions)
 

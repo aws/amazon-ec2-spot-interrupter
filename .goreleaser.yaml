@@ -35,9 +35,6 @@ brews:
       owner: aws
       name: homebrew-tap
 
-      # Optionally a token can be provided, if it differs from the token provided to GoReleaser
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-
     url_template: "http://github.com/aws/amazon-ec2-spot-interrupter/releases/{{ .Tag }}/{{ .ArtifactName }}"
 
     commit_author:
