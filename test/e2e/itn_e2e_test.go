@@ -75,7 +75,6 @@ func TestSpotITN(t *testing.T) {
 	assert.Contains(t, spotiOutputClean, "✅ Spot Instance Shutdown sent")
 
 	// Validate Spot instance terminating
-	time.Sleep(time.Second * 5)
 	retry := API_RETRY_COUNT
 	terminating := false
 	for retry > 0 {
