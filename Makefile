@@ -14,6 +14,10 @@ build:
 test:
 	go test -bench=. ${BUILD_DIR}/../... -v -coverprofile=coverage.out -covermode=atomic -outputdir=${BUILD_DIR}
 
+e2e-test:
+	go build -a -ldflags="-s -w -X main.version=${VERSION}" -o ${BUILD_DIR}/spot-itn ${BUILD_DIR}/../cmd/main.go
+	go test ./test/e2e -v
+
 verify:
 	go mod tidy
 	go mod download
