@@ -94,6 +94,7 @@ func (i ITN) Interrupt(ctx context.Context, instanceIDs []string, delay time.Dur
 	}
 	events := make(chan Event, 10)
 	go func() {
+		defer close(events)
 		if clean {
 			defer func() {
 				if err := i.Clean(ctx, *experiment); err != nil {
@@ -104,7 +105,6 @@ func (i ITN) Interrupt(ctx context.Context, instanceIDs []string, delay time.Dur
 				}
 			}()
 		}
-		defer close(events)
 		if err := i.monitor(ctx, events, experiment, delay); err != nil {
 			events <- Event{
 				Timestamp: time.Now(),
