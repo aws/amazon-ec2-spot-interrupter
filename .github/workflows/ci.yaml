@@ -1,14 +1,23 @@
-name: spot-interrupter ci workflows
+name: spot-interrupter build and test
 
-on: [pull_request, workflow_dispatch]
+on: [pull_request_target, workflow_dispatch]
 
 env:
   DEFAULT_GO_VERSION: ^1.18
 
 jobs:
+  approve:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Approve
+      run: echo Pull requests require approval before running any automated CI.
+
   buildAndTest:
     name: Build and Test
     runs-on: ubuntu-latest
+    needs: [approve]
+    environment:
+      name: Pull Request Integration
     steps:
     - name: Set up Go
       uses: actions/setup-go@v2
@@ -17,6 +26,8 @@ jobs:
 
     - name: Checkout
       uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
 
     - name: Integration Test
       run: make e2e-test
