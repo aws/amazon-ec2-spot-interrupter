@@ -4,6 +4,10 @@ before:
     - go mod tidy
 builds:
   - main: ./cmd/main.go
+    # update ldflags and mod_timestamp to ensure reproducible builds
+    ldflags:
+      - -s -w -X main.build={{.Version}} -X main.commit={{.Commit}} -X main.date={{.CommitDate}} -X main.builtBy=goreleaser
+    mod_timestamp: '{{ .CommitTimestamp }}'
     env:
       - CGO_ENABLED=0
     targets:
@@ -16,8 +20,6 @@ archives:
   - replacements:
       darwin: Darwin
       linux: Linux
-checksum:
-  name_template: 'checksums.txt'
 snapshot:
   name_template: "{{ incpatch .Version }}-snapshot"
 changelog:
