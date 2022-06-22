@@ -61,24 +61,25 @@ const (
 		]
 	}`
 	SpotITNAction  = "aws:ec2:send-spot-instance-interruptions"
+	fisRoleName    = "aws-fis-itn"
 	fisTargetLimit = 5
 )
 
 type ITN struct {
-	cfg    aws.Config
-	stsAPI *sts.Client
-	fisAPI *fis.Client
-	iamAPI *iam.Client
-	ec2API *ec2.Client
+	cfg       aws.Config
+	stsClient stsAPI
+	fisClient fisAPI
+	iamClient iamAPI
+	ec2Client ec2API
 }
 
 func New(cfg aws.Config) *ITN {
 	return &ITN{
-		cfg:    cfg,
-		stsAPI: sts.NewFromConfig(cfg),
-		fisAPI: fis.NewFromConfig(cfg),
-		iamAPI: iam.NewFromConfig(cfg),
-		ec2API: ec2.NewFromConfig(cfg),
+		cfg:       cfg,
+		stsClient: sts.NewFromConfig(cfg),
+		fisClient: fis.NewFromConfig(cfg),
+		iamClient: iam.NewFromConfig(cfg),
+		ec2Client: ec2.NewFromConfig(cfg),
 	}
 }
 
@@ -119,7 +120,7 @@ func (i ITN) validate(ctx context.Context, instanceIDs []string) error {
 	if len(instanceIDs) == 0 {
 		return errors.New("no instances specified")
 	}
-	paginator := ec2.NewDescribeInstancesPaginator(i.ec2API, &ec2.DescribeInstancesInput{InstanceIds: instanceIDs})
+	paginator := ec2.NewDescribeInstancesPaginator(i.ec2Client, &ec2.DescribeInstancesInput{InstanceIds: instanceIDs})
 	var instances []ec2types.Instance
 	for paginator.HasMorePages() {
 		out, err := paginator.NextPage(ctx)
@@ -143,7 +144,7 @@ func (i ITN) validate(ctx context.Context, instanceIDs []string) error {
 }
 
 func (i ITN) SpotInstances(ctx context.Context) ([]ec2types.Instance, error) {
-	paginator := ec2.NewDescribeInstancesPaginator(i.ec2API, &ec2.DescribeInstancesInput{
+	paginator := ec2.NewDescribeInstancesPaginator(i.ec2Client, &ec2.DescribeInstancesInput{
 		Filters: []ec2types.Filter{
 			{
 				Name:   aws.String("instance-lifecycle"),
@@ -170,7 +171,7 @@ func (i ITN) SpotInstances(ctx context.Context) ([]ec2types.Instance, error) {
 
 // Clean deletes the generated experiment template from FIS
 func (i ITN) Clean(ctx context.Context, experiment types.Experiment) error {
-	_, err := i.fisAPI.DeleteExperimentTemplate(ctx, &fis.DeleteExperimentTemplateInput{Id: experiment.ExperimentTemplateId})
+	_, err := i.fisClient.DeleteExperimentTemplate(ctx, &fis.DeleteExperimentTemplateInput{Id: experiment.ExperimentTemplateId})
 	return err
 }
 
@@ -198,7 +199,7 @@ func (i ITN) monitor(ctx context.Context, events chan Event, experiment *types.E
 	for {
 		select {
 		case <-ticker.C:
-			experimentUpdate, err := i.fisAPI.GetExperiment(ctx, &fis.GetExperimentInput{Id: experiment.Id})
+			experimentUpdate, err := i.fisClient.GetExperiment(ctx, &fis.GetExperimentInput{Id: experiment.Id})
 			if err != nil {
 				return err
 			}
@@ -267,11 +268,11 @@ func (i ITN) createInterruptions(ctx context.Context, instanceIDs []string, dela
 			ResourceArns:  i.instanceIDsToARNs(batch, i.cfg.Region, accountID),
 		}
 	}
-	experimentTemplate, err := i.fisAPI.CreateExperimentTemplate(ctx, template)
+	experimentTemplate, err := i.fisClient.CreateExperimentTemplate(ctx, template)
 	if err != nil {
 		return nil, err
 	}
-	experiment, err := i.fisAPI.StartExperiment(ctx, &fis.StartExperimentInput{ExperimentTemplateId: experimentTemplate.ExperimentTemplate.Id})
+	experiment, err := i.fisClient.StartExperiment(ctx, &fis.StartExperimentInput{ExperimentTemplateId: experimentTemplate.ExperimentTemplate.Id})
 	if err != nil {
 		return nil, err
 	}
@@ -295,20 +296,19 @@ func (i ITN) batchInstances(instanceIDs []string, size int) [][]string {
 }
 
 func (i ITN) getOrCreateFISRole(ctx context.Context, accountID string) (*string, error) {
-	roleName := "aws-fis-itn"
-	out, err := i.iamAPI.CreateRole(ctx, &iam.CreateRoleInput{
-		RoleName:                 ptr.String(roleName),
+	out, err := i.iamClient.CreateRole(ctx, &iam.CreateRoleInput{
+		RoleName:                 ptr.String(fisRoleName),
 		AssumeRolePolicyDocument: ptr.String(trustPolicy),
 	})
 	var alreadyExists *iamtypes.EntityAlreadyExistsException
 	if errors.As(err, &alreadyExists) {
-		return ptr.String(fmt.Sprintf("arn:aws:iam::%s:role/%s", accountID, roleName)), nil
+		return ptr.String(fmt.Sprintf("arn:aws:iam::%s:role/%s", accountID, fisRoleName)), nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	_, err = i.iamAPI.PutRolePolicy(ctx, &iam.PutRolePolicyInput{
-		PolicyName:     ptr.String(fmt.Sprintf("%s-policy", roleName)),
+	_, err = i.iamClient.PutRolePolicy(ctx, &iam.PutRolePolicyInput{
+		PolicyName:     ptr.String(fmt.Sprintf("%s-policy", fisRoleName)),
 		PolicyDocument: ptr.String(rolePolicy),
 		RoleName:       out.Role.RoleName,
 	})
@@ -319,7 +319,7 @@ func (i ITN) getOrCreateFISRole(ctx context.Context, accountID string) (*string,
 }
 
 func (i ITN) getAccountID(ctx context.Context) (string, error) {
-	identity, err := i.stsAPI.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
+	identity, err := i.stsClient.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
 	if err != nil {
 		return "", err
 	}
