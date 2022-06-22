@@ -29,6 +29,9 @@ jobs:
       with:
         ref: ${{ github.event.pull_request.head.sha }}
 
+    - name: Unit Test
+      run: go test -bench=. ./pkg/... -v -coverprofile=coverage.out -covermode=atomic
+
     - name: Integration Test
       run: make e2e-test
       env:
