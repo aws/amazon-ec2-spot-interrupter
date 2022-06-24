@@ -50,14 +50,14 @@ func TestSpotITN(t *testing.T) {
 	require.NotNil(t, ec2Client)
 
 	launchTemplate, ltCleanup := CreateLTForTest(*ec2Client)
-	require.NotNil(t, launchTemplate.LaunchTemplateId)
 	defer ltCleanup()
+	require.NotNil(t, launchTemplate.LaunchTemplateId)
 	launchTemplateID := *launchTemplate.LaunchTemplateId
 	fmt.Println("✅ Launch template created")
 
 	spotInstance, fleetCleanup := CreateSpotInstance(*ec2Client, launchTemplateID)
-	require.NotNil(t, spotInstance.InstanceId)
 	defer fleetCleanup()
+	require.NotNil(t, spotInstance.InstanceId)
 	spotInstanceID := *spotInstance.InstanceId
 	fmt.Println("✅ Spot request fulfilled")
 
