@@ -53,18 +53,22 @@ func TestSpotITN(t *testing.T) {
 	require.NotNil(t, launchTemplate.LaunchTemplateId)
 	defer ltCleanup()
 	launchTemplateID := *launchTemplate.LaunchTemplateId
+	fmt.Println("✅ Launch template created")
 
 	spotInstance, fleetCleanup := CreateSpotInstance(*ec2Client, launchTemplateID)
 	require.NotNil(t, spotInstance.InstanceId)
 	defer fleetCleanup()
 	spotInstanceID := *spotInstance.InstanceId
+	fmt.Println("✅ Spot request fulfilled")
 
 	// Run spot-interrupter with created Spot instance
+	fmt.Printf("Starting spot-interrupter with instance %s ...\n", spotInstanceID)
 	spotItnCommand := exec.Command(APP_PATH,
 		"--instance-ids", spotInstanceID, "--region", TEST_REGION)
 	spotiOutput, err := spotItnCommand.Output()
 	require.Nil(t, err)
 	spotiOutputClean := string(spotiOutput)
+	fmt.Println("✅ spot-interrupter completed")
 
 	// Validate expected events happened to the designated instance
 	assert.Contains(t, spotiOutputClean, spotInstanceID)
@@ -138,6 +142,7 @@ func CreateSpotInstance(client ec2.Client, lauchTemplateID string) (*ec2types.In
 			SpotTargetCapacity:        aws.Int32(1),
 		},
 	}
+	fmt.Println("Requesting spot instance...")
 	fleetOutput, err := client.CreateFleet(ctx, &fleetInput)
 	if err != nil {
 		fmt.Printf("❌ CreateFleet returned an error:  %s\n output: %+v\n", err, fleetOutput)
@@ -152,6 +157,8 @@ func CreateSpotInstance(client ec2.Client, lauchTemplateID string) (*ec2types.In
 		})
 		if err != nil {
 			fmt.Printf("❌ DeleteFleets for fleet: %s returned an error:  %s\n output: %+v\n", *fleetOutput.FleetId, err, output)
+		} else {
+			fmt.Println("✅ Fleet deleted")
 		}
 	}
 
@@ -263,6 +270,8 @@ func CreateLTForTest(client ec2.Client) (*ec2types.LaunchTemplate, func()) {
 		})
 		if err != nil {
 			fmt.Printf("❌ DeleteLaunchTemplate returned an error:  %s\n output: %+v\n", err, output)
+		} else {
+			fmt.Println("✅ Launch template deleted")
 		}
 	}
 
