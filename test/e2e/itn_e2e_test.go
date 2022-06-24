@@ -19,6 +19,7 @@ import (
 	"os"
 	"os/exec"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go-v2/service/fis"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -93,6 +95,21 @@ func TestSpotITN(t *testing.T) {
 		retry--
 	}
 	require.True(t, terminating)
+
+	// Validate FIS template deleted
+	templateDeleted := true
+	fisClient := fis.NewFromConfig(cfg)
+	require.NotNil(t, fisClient)
+	// hard-coded in app; ex: trigger spot ITN for instances [i-myInstanceEyeDeeIs]
+	fisTemplateDescription := fmt.Sprintf("trigger spot ITN for instances [%s]", spotInstanceID)
+	fisResp, err := fisClient.ListExperimentTemplates(ctx, &fis.ListExperimentTemplatesInput{})
+	require.Nil(t, err)
+	for _, expTemplate := range fisResp.ExperimentTemplates {
+		if strings.EqualFold(fisTemplateDescription, *expTemplate.Description) {
+			templateDeleted = false
+		}
+	}
+	require.True(t, templateDeleted)
 }
 
 /*
