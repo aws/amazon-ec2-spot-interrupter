@@ -8,7 +8,7 @@ The `ec2-spot-interrupter` is a simple CLI tool that triggers Amazon EC2 Spot In
 
 ```bash
 brew tap aws/tap
-brew install aws/ec2-spot-interrupter
+brew install ec2-spot-interrupter
 ```
 
 ## About
