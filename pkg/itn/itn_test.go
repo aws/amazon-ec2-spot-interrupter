@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	h "github.com/aws/itn/pkg/test"
+	h "github.com/aws/amazon-ec2-spot-interrupter/pkg/test"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/fis"

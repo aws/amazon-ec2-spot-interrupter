@@ -16,9 +16,9 @@ package tui
 import (
 	"fmt"
 
+	"github.com/aws/amazon-ec2-spot-interrupter/pkg/cli"
+	"github.com/aws/amazon-ec2-spot-interrupter/pkg/itn"
 	"github.com/aws/aws-sdk-go-v2/service/fis/types"
-	"github.com/aws/itn/pkg/cli"
-	"github.com/aws/itn/pkg/itn"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

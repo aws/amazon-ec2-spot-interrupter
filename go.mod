@@ -1,4 +1,4 @@
-module github.com/aws/itn
+module github.com/aws/amazon-ec2-spot-interrupter
 
 go 1.18
 

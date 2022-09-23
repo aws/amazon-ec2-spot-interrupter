@@ -16,8 +16,8 @@ package cli
 import (
 	"fmt"
 
+	"github.com/aws/amazon-ec2-spot-interrupter/pkg/itn"
 	"github.com/aws/aws-sdk-go-v2/service/fis/types"
-	"github.com/aws/itn/pkg/itn"
 )
 
 func Summary(experiment *types.Experiment) string {
