@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aws/amazon-ec2-spot-interrupter/pkg/itn"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"github.com/aws/itn/pkg/itn"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )

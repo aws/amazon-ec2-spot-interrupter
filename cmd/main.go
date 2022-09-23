@@ -20,9 +20,9 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/itn/pkg/cli"
-	"github.com/aws/itn/pkg/itn"
-	"github.com/aws/itn/pkg/tui"
+	"github.com/aws/amazon-ec2-spot-interrupter/pkg/cli"
+	"github.com/aws/amazon-ec2-spot-interrupter/pkg/itn"
+	"github.com/aws/amazon-ec2-spot-interrupter/pkg/tui"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )
