@@ -1,8 +1,8 @@
 # Amazon EC2 Spot Interrupter
+
 The `ec2-spot-interrupter` is a simple CLI tool that triggers Amazon EC2 Spot Interruption Notifications and Rebalance Recommendations.
 
 [![Action Status](https://github.com/aws/amazon-ec2-spot-interrupter/actions/workflows/release.yaml/badge.svg)](https://github.com/aws/amazon-ec2-spot-interrupter/actions/workflows/release.yaml)
-
 
 ## Installation
 
@@ -67,12 +67,15 @@ $ ec2-spot-interrupter --instance-ids i-0208a716009d70b36
 ```
 
 ## Communication
+
 If you've run into a bug or have a new feature request, please open an [issue](https://github.com/aws/amazon-ec2-spot-interrupter/issues/new).
 
 Check out the open source [Amazon EC2 Spot Instances Integrations Roadmap](https://github.com/aws/ec2-spot-instances-integrations-roadmap) to see what we're working on and give us feedback! 
 
 ##  Contributing
+
 Contributions are welcome! Please read our [guidelines](https://github.com/aws/amazon-ec2-spot-interrupter/blob/main/CONTRIBUTING.md) and our [Code of Conduct](https://github.com/aws/amazon-ec2-spot-interrupter/blob/main/CODE_OF_CONDUCT.md).
 
 ## License
+
 This project is licensed under the [Apache-2.0](LICENSE) License.
