@@ -5,7 +5,7 @@ The `ec2-spot-interrupter` is a simple CLI tool that triggers Amazon EC2 Spot In
 [![Action Status](https://github.com/aws/amazon-ec2-spot-interrupter/actions/workflows/release.yaml/badge.svg)](https://github.com/aws/amazon-ec2-spot-interrupter/actions/workflows/release.yaml)
 
 ## Installation
-
+test
 ```bash
 brew tap aws/tap
 brew install ec2-spot-interrupter
