@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/fis v1.12.3
 	github.com/aws/aws-sdk-go-v2/service/iam v1.18.3
 	github.com/aws/aws-sdk-go-v2/service/sts v1.16.3
-	github.com/aws/smithy-go v1.11.2
+	github.com/aws/smithy-go v1.13.5
 	github.com/charmbracelet/bubbles v0.15.0
 	github.com/charmbracelet/bubbletea v0.23.1
 	github.com/charmbracelet/lipgloss v0.6.0
