@@ -14,7 +14,7 @@ require (
 	github.com/charmbracelet/bubbletea v0.23.1
 	github.com/charmbracelet/lipgloss v0.6.0
 	github.com/samber/lo v1.19.0
-	github.com/spf13/cobra v1.4.0
+	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/multierr v1.9.0
 )
@@ -32,7 +32,7 @@ require (
 	github.com/aymanbagabas/go-osc52 v1.0.3 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
