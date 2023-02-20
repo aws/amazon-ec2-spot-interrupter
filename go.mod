@@ -15,7 +15,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.6.0
 	github.com/samber/lo v1.37.0
 	github.com/spf13/cobra v1.6.1
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.1
 	go.uber.org/multierr v1.9.0
 )
 
