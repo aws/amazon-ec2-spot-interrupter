@@ -2,3 +2,4 @@
 # More information here: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
 * @aws/ec2-guacamole
+* @aws/karpenter
