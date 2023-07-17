@@ -3,7 +3,7 @@ module github.com/aws/amazon-ec2-spot-interrupter
 go 1.20
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.17.5
+	github.com/aws/aws-sdk-go-v2 v1.19.0
 	github.com/aws/aws-sdk-go-v2/config v1.18.13
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.86.1
 	github.com/aws/aws-sdk-go-v2/service/fis v1.14.4
