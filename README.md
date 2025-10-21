@@ -26,7 +26,8 @@ If you are looking for a tool to test Spot Interruption Notifications and Rebala
 ## Usage
 
 ```
-$ ec2-spot-interrupter is a simple CLI tool that triggers Amazon EC2 Spot Instance Interruption Notifications and Rebalance Recommendations.
+$ ec2-spot-interrupter -h
+ec2-spot-interrupter is a simple CLI tool that triggers Amazon EC2 Spot Instance Interruption Notifications and Rebalance Recommendations.
 
 Usage:
   ec2-spot-interrupter [flags]
