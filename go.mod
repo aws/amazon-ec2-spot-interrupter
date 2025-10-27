@@ -1,15 +1,15 @@
 module github.com/aws/amazon-ec2-spot-interrupter
 
-go 1.20
+go 1.23
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.17.5
-	github.com/aws/aws-sdk-go-v2/config v1.18.13
+	github.com/aws/aws-sdk-go-v2 v1.39.4
+	github.com/aws/aws-sdk-go-v2/config v1.31.15
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.86.1
 	github.com/aws/aws-sdk-go-v2/service/fis v1.14.4
 	github.com/aws/aws-sdk-go-v2/service/iam v1.19.4
-	github.com/aws/aws-sdk-go-v2/service/sts v1.18.5
-	github.com/aws/smithy-go v1.13.5
+	github.com/aws/aws-sdk-go-v2/service/sts v1.38.9
+	github.com/aws/smithy-go v1.23.1
 	github.com/charmbracelet/bubbles v0.15.0
 	github.com/charmbracelet/bubbletea v0.23.2
 	github.com/charmbracelet/lipgloss v0.6.0
@@ -21,14 +21,15 @@ require (
 
 require (
 	github.com/atotto/clipboard v0.1.4 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.13.13 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.22 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.29 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.23 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.29 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.23 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.12.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.2 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.18.19 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.11 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.11 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.11 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.11 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.29.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.3 // indirect
 	github.com/aymanbagabas/go-osc52 v1.2.1 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
