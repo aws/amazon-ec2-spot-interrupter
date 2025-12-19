@@ -2,6 +2,9 @@ name: spot-interrupter e2e tests
 
 on: [pull_request_target, workflow_dispatch]
 
+permissions:
+  contents: read
+
 jobs:
   approve:
     runs-on: ubuntu-latest
