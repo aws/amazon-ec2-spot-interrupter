@@ -6,7 +6,7 @@ before:
 builds:
   - main: ./cmd/main.go
     ldflags:
-      - -s -w -X main.build={{.Version}} -X main.commit={{.Commit}} -X main.builtBy=goreleaser
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.builtBy=goreleaser
     mod_timestamp: '{{ .CommitTimestamp }}'
     env:
       - CGO_ENABLED=0
