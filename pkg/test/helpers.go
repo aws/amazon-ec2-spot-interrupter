@@ -54,11 +54,11 @@ func Equals(tb testing.TB, exp, act interface{}) {
 // A nil argument is equivalent to an empty slice.
 func ItemsMatch(tb testing.TB, exp, act []string) {
 	if len(exp) != len(act) {
-		tb.Errorf(fmt.Sprintf("Expected %d items in slice, but was %d", len(exp), len(act)))
+		tb.Errorf("Expected %d items in slice, but was %d", len(exp), len(act))
 	}
 	for _, v := range exp {
 		if !Contains(act, v) {
-			tb.Errorf(fmt.Sprintf("Expected to find item %s in slice, but was not found", v))
+			tb.Errorf("Expected to find item %s in slice, but was not found", v)
 		}
 	}
 }

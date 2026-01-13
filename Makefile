@@ -6,13 +6,13 @@ GOPROXY ?= "https://proxy.golang.org,direct"
 
 $(shell mkdir -p ${BUILD_DIR})
 
-all: verify test build
+all: verify unit-test build
 
 build:
 	go build -a -ldflags="-s -w -X main.version=${VERSION}" -o ${BUILD_DIR}/itn-${GOOS}-${GOARCH} ${BUILD_DIR}/../cmd/main.go
 
-test:
-	go test -bench=. ${BUILD_DIR}/../... -v -coverprofile=coverage.out -covermode=atomic -outputdir=${BUILD_DIR}
+unit-test:
+	go test -bench=. ${BUILD_DIR}/../pkg/... -v -coverprofile=coverage.out -covermode=atomic -outputdir=${BUILD_DIR}
 
 e2e-test:
 	go build -a -ldflags="-s -w -X main.version=${VERSION}" -o ${BUILD_DIR}/spot-itn ${BUILD_DIR}/../cmd/main.go
@@ -30,4 +30,4 @@ version:
 help:
 	@grep -E '^[a-zA-Z_-]+:.*$$' $(MAKEFILE_LIST) | sort
 
-.PHONY: all build test verify help
+.PHONY: all build unit-test e2e-test verify help

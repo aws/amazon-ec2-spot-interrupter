@@ -24,4 +24,4 @@ jobs:
         go-version: stable
 
     - name: Unit Test
-      run: go test -bench=. ./pkg/... -v -coverprofile=coverage.out -covermode=atomic
+      run: make unit-test

@@ -215,7 +215,7 @@ func (i ITN) monitor(ctx context.Context, events chan Event, experiment *types.E
 					Message:   "🔧 Interruption Experiment is initializing",
 				}
 			case types.ExperimentStatusFailed, types.ExperimentStatusStopped:
-				return fmt.Errorf(*experimentUpdate.Experiment.State.Reason)
+				return errors.New(*experimentUpdate.Experiment.State.Reason)
 			case types.ExperimentStatusCompleted:
 				events <- Event{
 					Timestamp: time.Now(),
