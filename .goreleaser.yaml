@@ -39,6 +39,7 @@ homebrew_casks:
       owner: aws
       name: homebrew-tap
       branch: "{{ .ProjectName }}-{{.Version}}"
+      token: "{{ .Env.EC2_BOT_GITHUB_TOKEN }}"
       pull_request:
         enabled: true
         base:
