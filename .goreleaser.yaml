@@ -45,4 +45,4 @@ homebrew_casks:
         base:
           owner: aws
           name: homebrew-tap
-          branch: main
+          branch: master
