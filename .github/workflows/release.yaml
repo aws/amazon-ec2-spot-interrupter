@@ -28,4 +28,4 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          EC2_BOT_GITHUB_TOKEN: ${{ secrets.EC2_BOT_GITHUB_TOKEN }}
+          EC2_GITHUB_TOKEN: ${{ secrets.EC2_BOT_GITHUB_TOKEN }}

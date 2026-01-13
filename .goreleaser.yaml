@@ -36,9 +36,9 @@ homebrew_casks:
     license: "Apache-2.0"
     caveats: "ec2-spot-interrupter --interactive"
     repository:
-      owner: aws
+      owner: ec2-bot
       name: homebrew-tap
-      branch: "{{ .ProjectName }}-{{.Version}}"
+      branch: "{{ .ProjectName }}-{{ .Version }}"
       token: "{{ .Env.EC2_BOT_GITHUB_TOKEN }}"
       pull_request:
         enabled: true
