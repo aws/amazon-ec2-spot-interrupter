@@ -30,15 +30,18 @@ changelog:
       - '^test:'
 homebrew_casks:
   - name: ec2-spot-interrupter
-    repository:
-      owner: aws
-      name: homebrew-tap
     directory: Casks
-    commit_author:
-      name: ec2-bot
-      email: ec2-bot@no-reply.github.com
-    commit_msg_template: "Brew cask update for {{ .ProjectName }} version {{ .Tag }}"
     homepage: "https://github.com/aws/amazon-ec2-spot-interrupter"
     description: "A simple CLI tool that triggers Amazon EC2 Spot Interruption Notifications and Rebalance Recommendations."
     license: "Apache-2.0"
     caveats: "ec2-spot-interrupter --interactive"
+    repository:
+      owner: aws
+      name: homebrew-tap
+      branch: "{{ .ProjectName }}-{{.Version}}"
+      pull_request:
+        enabled: true
+        base:
+          owner: aws
+          name: homebrew-tap
+          branch: main
