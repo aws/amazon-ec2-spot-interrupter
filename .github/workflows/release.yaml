@@ -12,22 +12,19 @@ jobs:
   goreleaser:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v3
-
-      -
-        name: Set up Go
-        uses: actions/setup-go@v3
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          go-version: 'stable'
-          check-latest: true
-      -
-        name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
-          version: latest
-          args: release --rm-dist
+          version: "~> v2"
+          args: release --clean
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.EC2_BOT_GITHUB_TOKEN }}

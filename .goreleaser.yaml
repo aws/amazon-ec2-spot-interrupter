@@ -1,10 +1,10 @@
+version: 2
 project_name: ec2-spot-interrupter
 before:
   hooks:
     - go mod tidy
 builds:
   - main: ./cmd/main.go
-    # update ldflags and mod_timestamp to ensure reproducible builds
     ldflags:
       - -s -w -X main.build={{.Version}} -X main.commit={{.Commit}} -X main.builtBy=goreleaser
     mod_timestamp: '{{ .CommitTimestamp }}'
@@ -12,64 +12,33 @@ builds:
       - CGO_ENABLED=0
     targets:
       - linux_amd64
-      - linux_arm_6
+      - linux_arm64
       - darwin_arm64
       - darwin_amd64
     binary: ec2-spot-interrupter
 archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
+  - formats:
+      - tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
 snapshot:
-  name_template: "{{ incpatch .Version }}-snapshot"
+  version_template: "{{ incpatch .Version }}-snapshot"
 changelog:
   sort: asc
   filters:
     exclude:
       - '^docs:'
       - '^test:'
-brews:
-  -
-    name: ec2-spot-interrupter
-
-    # GitHub/GitLab repository to push the formula to
-    tap:
+homebrew_casks:
+  - name: ec2-spot-interrupter
+    repository:
       owner: aws
       name: homebrew-tap
-
-    url_template: "https://github.com/aws/amazon-ec2-spot-interrupter/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-
+    directory: Casks
     commit_author:
       name: ec2-bot
       email: ec2-bot@no-reply.github.com
-
-    # The project name and current git tag are used in the format string.
-    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
-
-    # Folder inside the repository to put the formula.
-    # Default is the root folder.
-    folder: Formula
-
-    caveats: "ec2-spot-interrupter --interactive"
-
+    commit_msg_template: "Brew cask update for {{ .ProjectName }} version {{ .Tag }}"
     homepage: "https://github.com/aws/amazon-ec2-spot-interrupter"
-
-    # Template of your app's description.
-    # Default is empty.
     description: "A simple CLI tool that triggers Amazon EC2 Spot Interruption Notifications and Rebalance Recommendations."
-
-    # SPDX identifier of your app's license.
-    # Default is empty.
-    license: "Apache-2"
-
-    # Setting this will prevent goreleaser to actually try to commit the updated
-    # formula - instead, the formula file will be stored on the dist folder only,
-    # leaving the responsibility of publishing it to the user.
-    # If set to auto, the release will not be uploaded to the homebrew tap
-    # in case there is an indicator for prerelease in the tag e.g. v1.0.0-rc1
-    # Default is false.
-    skip_upload: true
-
-    # So you can `brew test` your formula.
-    # Default is empty.
-    test: system "#{bin}/program --version"
+    license: "Apache-2.0"
+    caveats: "ec2-spot-interrupter --interactive"
